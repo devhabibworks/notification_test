@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:notification_test/services/tts_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -94,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
         scheduledDate: scheduledDate,
       );
 
-      await NotificationService.scheduleAndroidAlarm(scheduledDate);
+await NotificationService.scheduleAndroidAlarm(scheduledDate, message);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Notification scheduled!')),
