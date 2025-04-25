@@ -8,41 +8,40 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-  static Future<void> init() async {
-    const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+static Future<void> init() async {
+  const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initSettings = InitializationSettings(
-      android: androidSettings,
-    );
+  const InitializationSettings initSettings = InitializationSettings(
+    android: androidSettings,
+  );
 
-    await _notifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (
-        NotificationResponse notificationResponse,
-      ) async {
-               print("$log onDidReceiveNotificationResponse");
+  await _notifications.initialize(
+    initSettings,
+    onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
+      print("$log onDidReceiveNotificationResponse");
+      _handleNotificationTap();
+    },
+  );
 
-        _handleNotificationTap();
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
+    'main_channel_id',
+    'Main Channel',
+    description: 'Used for important scheduled notifications.',
+    importance: Importance.max,
+  );
 
-      },
-    );
+  final androidPlugin = _notifications
+      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
 
-    // Optional: explicitly create the notification channel
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'main_channel_id',
-      'Main Channel',
-      description: 'Used for important scheduled notifications.',
-      importance: Importance.max,
-    );
+  if (androidPlugin != null) {
+    await androidPlugin.createNotificationChannel(channel);
 
-    final androidPlugin =
-        _notifications
-            .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin
-            >();
-    await androidPlugin?.createNotificationChannel(channel);
+    // ⬇️ Important NEW: request permission for exact alarm
+    final bool? canScheduleExactNotifications = await androidPlugin.requestExactAlarmsPermission();
+    print("$log canScheduleExactNotifications: $canScheduleExactNotifications");
   }
+}
 
 static Future<void> scheduleNotification({
   required int id,
