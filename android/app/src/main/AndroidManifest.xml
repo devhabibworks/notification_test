@@ -34,9 +34,6 @@
         <!-- <receiver android:name=".NotificationReceiver" android:exported="true" /> -->
 
         <!-- Background Service Declaration -->
-        <service
-            android:name="com.example.notification_test.BackgroundService"
-            android:exported="false" />
 
         <receiver
             android:exported="false"
@@ -54,18 +51,7 @@
             </intent-filter>
         </receiver>
 
-        <!-- Boot Receiver to restart background service after reboot -->
-        <receiver
-            android:name="dev.fluttercommunity.plus.flutter_background_service.BackgroundServiceBootReceiver"
-            android:enabled="true"
-            android:exported="true"
-            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.REBOOT" />
-            </intent-filter>
-        </receiver>
-
+      
 
         <activity
             android:name=".MainActivity"

@@ -5,7 +5,6 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import 'services/notification_service.dart';
-import 'services/background_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,7 +19,6 @@ void main() async {
 
   // Initialize notification & background services
   await NotificationService.init();
-  await BackgroundService.initialize();
 
   runApp(const MyApp());
 }
@@ -84,7 +82,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
       final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: delaySeconds));
 
-      print("$log Scheduling at: $scheduledDate with message: $message");
 
       await NotificationService.scheduleNotification(
         id: DateTime.now().millisecondsSinceEpoch.remainder(100000), // unique id

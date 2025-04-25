@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'background_service.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
@@ -24,7 +23,6 @@ class NotificationService {
       onDidReceiveNotificationResponse: (
         NotificationResponse notificationResponse,
       ) async {
-        print("$log onDidReceiveNotificationResponse");
         //  _handleNotificationTap();
       },
     );
@@ -45,12 +43,6 @@ class NotificationService {
     if (androidPlugin != null) {
       await androidPlugin.createNotificationChannel(channel);
 
-      // Request permission explicitly
-      final granted = await androidPlugin.requestExactAlarmsPermission();
-      print('$log requestExactAlarmsPermission: $granted');
-
-      final canSchedule = await androidPlugin.canScheduleExactNotifications();
-      print('$log canScheduleExactNotifications: $canSchedule');
     }
   }
 
@@ -76,8 +68,7 @@ class NotificationService {
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: null,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+     
       payload: body, // ✅ pass the message text as payload
     );
   }
