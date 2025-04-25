@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:notification_test/services/tts_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -27,9 +28,14 @@ void main() async {
 
 /// Request permission for notifications (Android 13+)
 Future<void> _requestNotificationPermission() async {
-  final status = await Permission.notification.status;
-  if (!status.isGranted) {
+  final notificationStatus = await Permission.notification.status;
+  if (!notificationStatus.isGranted) {
     await Permission.notification.request();
+  }
+
+  final alarmStatus = await Permission.scheduleExactAlarm.status;
+  if (!alarmStatus.isGranted) {
+    await Permission.scheduleExactAlarm.request();
   }
 }
 
@@ -56,16 +62,25 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('Notification + TTS')),
       body: Center(
         child: ElevatedButton(
-          onPressed: () {
-            final scheduledDate = DateTime.now().add(
-              const Duration(seconds: 10),
-            );
-            NotificationService.scheduleNotification(
-              id: 0,
-              title: 'Scheduled Reminder',
-              body: 'This is your scheduled TTS notification.',
-              scheduledDate: scheduledDate,
-            );
+          onPressed: () async {
+            // // TTSService.speak("Hello World");
+             final scheduledDate = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+
+
+            print("$log $scheduledDate");
+            try {
+              await NotificationService.scheduleNotification(
+                id: 0,
+                title: 'Scheduled Reminder',
+                body: 'This is your scheduled TTS notification.',
+                scheduledDate: scheduledDate,
+              );
+              print('Notification scheduled for $scheduledDate');
+            } catch (e) {
+              print('Error scheduling notification: $e');
+            }
+
+            //  NotificationService.testNotificaoin();
           },
           child: const Text('Schedule Notification (10s)'),
         ),

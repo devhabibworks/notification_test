@@ -1,10 +1,24 @@
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'tts_service.dart';
 
+String log = "notificaion_log";
+
+@pragma('vm:entry-point')
 void onStart(ServiceInstance service) {
   service.on('trigger_tts').listen((event) {
+    
+    try{
+          print("$log $event");
+        print("$log ${event?['message']}");
+
     final message = event?['message'] ?? 'Default TTS message';
     TTSService.speak(message);
+    }
+    catch(e){
+          print("$log error = ${e.toString()}");
+
+    }
+
   });
 }
 
