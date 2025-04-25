@@ -73,26 +73,7 @@ class NotificationService {
     );
   }
 
-  static void triggerNotificationLogic() {
-    // Allow programmatic (automatic) execution
-    //  _handleNotificationTap();
-  }
-
-  static void testNotification() {
-    NotificationService._notifications.show(
-      0,
-      'Test Immediate Notification',
-      'This should appear instantly.',
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'main_channel_id',
-          'Main Channel',
-          importance: Importance.max,
-          priority: Priority.high,
-        ),
-      ),
-    );
-  }
+  
 
   static Future<void> scheduleAndroidAlarm(
     DateTime datetime,

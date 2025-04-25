@@ -18,7 +18,7 @@ public class AlarmReceiver extends BroadcastReceiver {
         // Initialize TextToSpeech
         tts = new TextToSpeech(context.getApplicationContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
-                tts.setLanguage(Locale.US);
+                tts.setLanguage(Locale.EN);
                 tts.setSpeechRate(1.0f);
 
                 // Use the final variable inside the lambda
