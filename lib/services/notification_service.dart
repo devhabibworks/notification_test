@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'background_service.dart';
@@ -8,40 +11,48 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
-static Future<void> init() async {
-  const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+        static const platform = MethodChannel('com.example.notification_test/alarm');
 
-  const InitializationSettings initSettings = InitializationSettings(
-    android: androidSettings,
-  );
 
-  await _notifications.initialize(
-    initSettings,
-    onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
-      print("$log onDidReceiveNotificationResponse");
-      _handleNotificationTap();
-    },
-  );
+  static Future<void> init() async {
+    const AndroidInitializationSettings androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const AndroidNotificationChannel channel = AndroidNotificationChannel(
-    'main_channel_id',
-    'Main Channel',
-    description: 'Used for important scheduled notifications.',
-    importance: Importance.max,
-  );
+    const InitializationSettings initSettings = InitializationSettings(
+      android: androidSettings,
+    );
 
-  final androidPlugin = _notifications
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+    await _notifications.initialize(
+      initSettings,
+      onDidReceiveNotificationResponse: (
+        NotificationResponse notificationResponse,
+      ) async {
+        print("$log onDidReceiveNotificationResponse");
+      //  _handleNotificationTap();
+      },
+    );
 
-  if (androidPlugin != null) {
-    await androidPlugin.createNotificationChannel(channel);
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'main_channel_id',
+      'Main Channel',
+      description: 'Used for important scheduled notifications.',
+      importance: Importance.max,
+    );
 
-    // ⬇️ Important NEW: request permission for exact alarm
-    final bool? canScheduleExactNotifications = await androidPlugin.requestExactAlarmsPermission();
-    print("$log canScheduleExactNotifications: $canScheduleExactNotifications");
+    final androidPlugin = _notifications
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin != null) {
+      await androidPlugin.createNotificationChannel(channel);
+
+      // Request permission explicitly
+      final granted = await androidPlugin.requestExactAlarmsPermission();
+      print('$log requestExactAlarmsPermission: $granted');
+
+      final canSchedule = await androidPlugin.canScheduleExactNotifications();
+      print('$log canScheduleExactNotifications: $canSchedule');
+    }
   }
-}
 
 static Future<void> scheduleNotification({
   required int id,
@@ -50,47 +61,64 @@ static Future<void> scheduleNotification({
   required tz.TZDateTime scheduledDate,
 }) async {
   await _notifications.zonedSchedule(
-  id,
-  title,
-  body,
-  scheduledDate, // <- must be tz.TZDateTime
-  const NotificationDetails(
-    android: AndroidNotificationDetails(
-      'main_channel_id',
-      'Main Channel',
-      channelDescription: 'Used for important scheduled notifications.',
-      importance: Importance.max,
-      priority: Priority.high,
-    ),
-  ),
-  androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-  matchDateTimeComponents: null, // Only needed if you want repeating
-);
-}
-  static void _handleNotificationTap() async {
-    print("$log _handleNotificationTap");
-
-    final service = FlutterBackgroundService();
-    service.invoke('trigger_tts', {
-      'message': 'You have received a scheduled notification!',
-    });
-  }
-
- static testNotificaoin(){
-    NotificationService._notifications.show(
-    0,
-    'Test Immediate Notification',
-    'This should appear instantly.',
+    id,
+    title,
+    body,
+    scheduledDate,
     const NotificationDetails(
       android: AndroidNotificationDetails(
         'main_channel_id',
         'Main Channel',
+        channelDescription: 'Used for important scheduled notifications.',
         importance: Importance.max,
         priority: Priority.high,
       ),
     ),
+    androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+    matchDateTimeComponents: null,
+    uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    payload: body, // ✅ pass the message text as payload
   );
- }
+}
 
+  // static void _handleNotificationTap() async {
+  //   print("$log _handleNotificationTap");
+
+  //   final service = FlutterBackgroundService();
+  //   service.invoke('trigger_tts', {
+  //     'message': 'You have received a scheduled notification!',
+  //   });
+  // }
+
+  static void triggerNotificationLogic() {
+    // Allow programmatic (automatic) execution
+  //  _handleNotificationTap();
+  }
+
+  static void testNotification() {
+    NotificationService._notifications.show(
+      0,
+      'Test Immediate Notification',
+      'This should appear instantly.',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'main_channel_id',
+          'Main Channel',
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+      ),
+    );
+  }
+ static Future<void> scheduleAndroidAlarm(DateTime datetime) async {
+    if (Platform.isAndroid) {
+      final int alarmTimeMillis = datetime.millisecondsSinceEpoch;
+      try {
+        await platform.invokeMethod('scheduleAlarm', {'time': alarmTimeMillis});
+      } on PlatformException catch (e) {
+        print("Failed to schedule alarm: '${e.message}'.");
+      }
+    }
+  }
 
 }

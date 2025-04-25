@@ -53,36 +53,91 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _secondsController = TextEditingController();
+  final TextEditingController _messageController = TextEditingController();
+
+  @override
+  void dispose() {
+    _secondsController.dispose();
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _scheduleNotification() async {
+    try {
+      final int delaySeconds = int.tryParse(_secondsController.text.trim()) ?? 0;
+      final String message = _messageController.text.trim();
+
+      if (delaySeconds <= 0 || message.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter valid seconds and message')),
+        );
+        return;
+      }
+
+      final scheduledDate = tz.TZDateTime.now(tz.local).add(Duration(seconds: delaySeconds));
+
+      print("$log Scheduling at: $scheduledDate with message: $message");
+
+      await NotificationService.scheduleNotification(
+        id: DateTime.now().millisecondsSinceEpoch.remainder(100000), // unique id
+        title: 'Scheduled Reminder',
+        body: message,
+        scheduledDate: scheduledDate,
+      );
+
+      await NotificationService.scheduleAndroidAlarm(scheduledDate);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notification scheduled!')),
+      );
+    } catch (e) {
+      print('Error scheduling notification: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: ${e.toString()}')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Notification + TTS')),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
-            // // TTSService.speak("Hello World");
-             final scheduledDate = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
-
-
-            print("$log $scheduledDate");
-            try {
-              await NotificationService.scheduleNotification(
-                id: 0,
-                title: 'Scheduled Reminder',
-                body: 'This is your scheduled TTS notification.',
-                scheduledDate: scheduledDate,
-              );
-              print('Notification scheduled for $scheduledDate');
-            } catch (e) {
-              print('Error scheduling notification: $e');
-            }
-
-            //  NotificationService.testNotificaoin();
-          },
-          child: const Text('Schedule Notification (10s)'),
+      body: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: _secondsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Enter seconds delay',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(
+                labelText: 'Enter message to speak',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: _scheduleNotification,
+              child: const Text('Schedule Notification'),
+            ),
+          ],
         ),
       ),
     );
